@@ -23,9 +23,6 @@ struct timespec64 ts;
 #define DRIVER_NAME "lcd_time"
 #define DRIVER_CLASS "Myclass"
 
-/* LCD char buffer */
-//atic char lcd_buffer[17];
-
 /* Pinout for LCD Display */
 unsigned int gpios[] = {
 	3, /* Enable Pin */
@@ -54,7 +51,7 @@ void LCD_command(uint8_t data)
 	gpio_set_value(gpios[0],1);
 	msleep(5);
 	gpio_set_value(gpios[0],0);
-	pr_info("LCD_Command: is recieved\n");
+	pr_info("LCD_Command: is received\n");
 }
 
 void LCD_data(uint8_t data)
@@ -68,7 +65,7 @@ void LCD_data(uint8_t data)
 	gpio_set_value(gpios[0],1);
 	msleep(5);
 	gpio_set_value(gpios[0],0);
-	pr_info("LCD_Data: is recieved\n");
+	pr_info("LCD_Data: is received\n");
 }
 
 void LCD_init(void)
@@ -82,10 +79,11 @@ void LCD_init(void)
 
 int LCD_timeFun(void *data)
 {
-	int i,hh,mm,ss,count=0,count_mm=1,check = 99;
+	int i,check = 99;
 	struct tm tm;
 	char pass,first_let,second_let;
-	char text[] = "TIME-00:00:00";
+	/* Hard coded value */
+	char text[] = "TIME-00:00:00"; 
 	char text1[] = "DATE-00/00/00";
 	for(i=0;i<sizeof(text)-1;i++)
 	{
@@ -138,12 +136,12 @@ int LCD_timeFun(void *data)
 			pass = tm.tm_year+1900;
 			first_let = pass % 10;
 			//	LCD_data(48 + first_let);
-			LCD_data(48+4);
+			LCD_data(48+4); //hard coded value for 24 year
 			pass /= 10;
 			second_let = pass % 10;
 			LCD_command(0xcb);
 			//	LCD_data(48 + second_let);
-			LCD_data(48+2);
+			LCD_data(48+2); //hard coded value for 24 year
 
 			//months
 			LCD_command(0xc9);
@@ -236,12 +234,9 @@ static int __init ModuleInit(void) {
 			goto GpioDirectionError;
 		}
 	}
-	//	pr_info("Data and time = %04ld-%02ld-%02ld = %02ld:%02ld:%02ld\n",tm.tm_year+1900,tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
 
 	LCD_init();
 	mythread = kthread_create(LCD_timeFun,NULL,"mythread");
-	//	LCD_data('A');
-	//	LCD_data('B');
 	if(mythread)
 	{
 		pr_info("Kthread is created\n");
@@ -252,7 +247,7 @@ static int __init ModuleInit(void) {
 		pr_err("Error : kthread\n");
 	}
 
-	gpio_set_value(gpios[10],1);
+	gpio_set_value(gpios[10],1); // Check the GPIO data is received or not
 
 	return 0;
 GpioDirectionError:
